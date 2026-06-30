@@ -11,51 +11,7 @@ title: D1_SETUPMOUSE<3
 - 4 cảm biến khoảng cách
 - Driver motor
 
-# 2. Cài đặt môi trường
-- Hướng dẫn lập trình bằng Arduino IDE và VSCode: [Hướng dẫn lập trình bằng Arduino IDE và VSCode](d1-huong-dan-lap-trinh-bang-arduinoide-va-vscode.md)
-- Bạn có thể chọn sử dụng một trong hai công cụ trên.
-## 2.1. Cài board esp32 (Arduino IDE)
-1. File → Preferences
-2. Tại **Additional Boards Manager URLs**, thêm:
-3. [https://espressif.github.io/arduino-esp32/package\_esp32\_index.json](https://espressif.github.io/arduino-esp32/package_esp32_index.json)
-4. Chọn **Tools → Board → Boards Manager...**.
-5. Tìm **esp32**.
-6. Cài đặt **esp32 by Espressif Systems**.
-7. Sau khi cài xong, chọn board **ESP32S3**.
-
-## 2.2. Cài board esp32 (Visual Studio Code)
-1. Vào **Extension** (Ctrl + Shift + X) →  cài **PlatformIO, Serial Monitor**
-2. **PlatformIO → New Project**
-3. Board: **Espressif ESP32-S3-DevKitM-1**
-4. Framework: **Arduino**
-5. Tìm **platformio.ini**.
-6. Sửa file **platformio.ini** thành:
-```ini
-[env:esp32-s3-devkitm-1]
-platform = espressif32
-board = esp32-s3-devkitm-1
-framework = arduino
-board_build.flash_size = 4MB
-board_upload.flash_size = 4MB
-board_build.flash_mode = dio
-board_build.partitions = default.csv
-upload_speed = 921600
-monitor_speed = 115200
-build_flags = 
-	-D ARDUINO_USB_MODE=1
-	-D ARDUINO_USB_CDC_ON_BOOT=1
-````
-7. Sau khi cài xong, vào src/**main.cpp** để bắt đầu code.
-8. Bấm **Upload** (Ctrl + Alt + U) (nút phía trên bên phải) để nạp code.
-9. **Ctrl + Shift + P → Chat: Focus on Serial Monitor View** để xem Serial Monitor
-
-## 2.3. Thư viện cần cài đặt
-- **Adafruit VL53L0X**: Thư viện điều khiển cảm biến khoảng cách bằng laser (ToF). Giúp robot đo chính xác khoảng cách đến tường theo đơn vị mm, ít bị sai số bởi màu sắc hay ánh sáng môi trường.
-- **Adafruit NeoPixel**: Thư viện điều khiển LED màu (RGB đơn dây). Dùng để đổi màu sắc hệ thống LED trên robot nhằm báo hiệu các trạng thái (đang dò đường, đã tìm thấy đích, hoặc báo lỗi).
-- **PCF8574**: Thư viện quản lý IC mở rộng chân giao tiếp I2C. Giúp robot tiết kiệm chân phần cứng của ESP32S3 mà vẫn bật/tắt và điều khiển được nhiều ngoại vi khác.
-- **ESP32Encoder**: Thư viện cấu hình bộ đếm xung phần cứng (PCNT) của ESP32. Giúp ghi nhận chính xác từng "tick" quay của bánh xe ở tốc độ cao mà không làm nặng CPU, đảm bảo robot đo khoảng cách và góc rẽ không bị sai lệch.
-
-# 3. Điều khiển motor
+# 2. Điều khiển motor
 ```cpp
 // cho hai motor trái, phải quay tiến với PWM 255
 motorL.movePWM(255);
@@ -71,12 +27,12 @@ motorR.movePWM(0);
 - Hàm movePWM(speed), speed nhận cả giá trị dương và âm. Dương là tiến, âm là lùi.
 - giá trị của speed cần được test phù hợp với từng mouse.
 
-# 4. Đọc encoder
-## 4.1. Encoder?
+# 3. Đọc encoder
+## 3.1. Encoder?
 - Encoder là cảm biến gắn trên bánh xe, đếm số bước bánh đã quay. Mỗi bước gọi là 1 tick.
 - Dùng để biết robot đã đi bao xa hoặc quay bao nhiêu góc.
 
-## 4.2. Đọc encoder
+## 3.2. Đọc encoder
 ```cpp
 // đặt lại bộ đếm về 0
 motorL.resetTicks(); 
@@ -88,7 +44,7 @@ Serial.println(motorR.getTicks());
 ```
 - resetTicks() đặt lại bộ đếm về 0 — thường gọi trước mỗi hành động mới để đo chính xác.
     - Nếu không reset, robot vừa đi thẳng xong rồi quẹo, ticks sẽ cộng dồn từ lần đi thẳng → đo góc quẹo sai.
-# 5. Đọc cảm biến & calibration
+# 4. Đọc cảm biến & calibration
 Hàm **read_sensor_raw()** đọc giá trị thô từ 4 cảm biến, áp dụng công thức hiệu chỉnh (2-point calibration) rồi cập nhật khoảng cách vào các biến toàn cục.
 
 ```cpp
@@ -114,15 +70,15 @@ Serial.println(distR);
 - Gọi read_sensor_raw() trước là vì các biến dist không tự cập nhật, phải gọi hàm thì mới đọc từ sensor
 -  Đơn vị là mm.
 
-## 5.1. Calibration cảm biến
+## 4.1. Calibration cảm biến
 
-### 5.1.1. VẤN ĐỀ
+### 4.1.1. VẤN ĐỀ
 Hai sensor cùng loại nhưng đọc cùng một khoảng cách có thể ra số khác nhau - cần calibrate để bù lại.
 
 Ví dụ: Khoảng cách thực là 50 mm mà sensor đọc ra 47mm hoặc 53m
 
 ---
-### 5.1.2. CÁCH GIẢI QUYẾT
+### 4.1.2. CÁCH GIẢI QUYẾT
 
 **B1.** Chọn 2 khoảng cách chuẩn 
 **B2.** Đo giá trị thô của cảm biến tại mỗi khoảng cách.
@@ -135,7 +91,7 @@ Ví dụ: Khoảng cách thực là 50 mm mà sensor đọc ra 47mm hoặc 53m
 **B6.** Kiểm tra lại ở một hoặc nhiều khoảng cách khác để đánh giá độ chính xác.
 
 ---
-### 5.1.3. VÍ DỤ
+### 4.1.3. VÍ DỤ
 
 **B1.** Đặt vật cản ở 2 khoảng cách chuẩn (ví dụ: 50 mm và 150 mm).
 **B2.** Đọc giá trị thô từ cảm biến tại mỗi khoảng cách.
@@ -160,7 +116,7 @@ distL = 0.9346 * sensorL.readRangeResult() + 6.07;
 
 **B5.** Kiểm tra lại ở các khoảng cách khác để đánh giá độ chính xác.
 
-# 6. Đọc tường
+# 5. Đọc tường
 So sánh distM1, distM2, distL, distR với một ngưỡng threshold để xác định có tường hay không
 - Ví dụ (CHỈ LÀ VÍ DỤ):
 ```cpp
@@ -170,7 +126,7 @@ if(distL < 100)  // có tường bên trái
 if(distR < 100)  // có tường bên phải
 ```
 
-# 7. Tham khảo 
+# 6. Tham khảo 
 
 Code SETUP mẫu: [Code SETUP mẫu](d1-code-setup.md)
 
